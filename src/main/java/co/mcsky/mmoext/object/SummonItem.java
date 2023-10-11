@@ -3,8 +3,8 @@ package co.mcsky.mmoext.object;
 public class SummonItem {
     private final String mobId;
     private final String itemId;
-    private final SummonConditions condition;
-    private final SummonEffects effect;
+    private final SummonCondition condition;
+    private final SummonEffect effect;
     private int delaySpawn;
     private int mobLevel;
 
@@ -12,8 +12,8 @@ public class SummonItem {
         this.itemId = itemId;
         this.mobId = mobId;
 
-        this.effect = new SummonEffects();
-        this.condition = new SummonConditions();
+        this.effect = new SummonEffect();
+        this.condition = new SummonCondition();
 
         this.mobLevel = 1;
         this.delaySpawn = 20;
@@ -27,11 +27,11 @@ public class SummonItem {
         return itemId;
     }
 
-    public SummonConditions getCondition() {
+    public SummonCondition getCondition() {
         return condition;
     }
 
-    public SummonEffects getEffect() {
+    public SummonEffect getEffect() {
         return effect;
     }
 

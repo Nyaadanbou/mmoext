@@ -1,33 +1,40 @@
-package co.mcsky.mmoext.config.loader;
+package co.mcsky.mmoext.config;
 
-import co.mcsky.mmoext.RPGBridge;
-import co.mcsky.mmoext.config.bean.ExplosionEffectConfig;
-import co.mcsky.mmoext.config.bean.PotionEffectConfig;
-import co.mcsky.mmoext.config.bean.SoundEffectConfig;
 import co.mcsky.mmoext.object.SummonItem;
 import com.google.common.base.Preconditions;
 import dev.lone.itemsadder.api.CustomStack;
 import io.lumine.mythic.api.MythicProvider;
-import me.lucko.helper.utils.Log;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.sound.Sound;
 import org.bukkit.block.Biome;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.jetbrains.annotations.Nullable;
+import org.intellij.lang.annotations.Subst;
+import org.slf4j.Logger;
 
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.logging.Level;
 
-@SuppressWarnings("PatternValidation")
+import org.jetbrains.annotations.Nullable;
+
 public class SummonItemLoader {
+    private final Plugin plugin;
+    private final Logger logger;
+
+    public SummonItemLoader(
+            final Plugin plugin,
+            final Logger logger
+    ) {
+        this.plugin = plugin;
+        this.logger = logger;
+    }
 
     public Set<SummonItem> readAll() {
         Set<SummonItem> items = new HashSet<>();
-        var section = RPGBridge.inst().getConfig().getConfigurationSection("items");
+        var section = plugin.getConfig().getConfigurationSection("items");
         if (section == null) return items;
 
         section.getKeys(false).forEach(key -> {
@@ -46,11 +53,11 @@ public class SummonItemLoader {
         Preconditions.checkNotNull(mobId, "mobID");
         Preconditions.checkNotNull(itemId, "itemID");
         if (MythicProvider.get().getMobManager().getMythicMob(mobId).isEmpty()) {
-            Log.severe("Loading failed! Unrecognized mob ID: " + mobId);
+            logger.error("Loading failed! Unrecognized mob ID: {}", mobId);
             return Optional.empty();
         }
         if (CustomStack.getInstance(itemId) == null) {
-            Log.severe("Loading failed! Unrecognized item ID: " + itemId);
+            logger.error("Loading failed! Unrecognized item ID: {}", itemId);
             return Optional.empty();
         }
 
@@ -67,6 +74,7 @@ public class SummonItemLoader {
         if (effectsSec != null) {
             // Read sounds
             effectsSec.getMapList("sounds").forEach(map -> {
+                @Subst("minecraft:entity.wither.spawn")
                 var soundName = map.get("name").toString();
                 var soundSource = map.get("source").toString();
                 var soundPitch = Float.parseFloat(map.get("pitch").toString());
@@ -123,8 +131,7 @@ public class SummonItemLoader {
             cond.setWilderness(condSec.getBoolean("wilderness"));
         }
 
-        RPGBridge.log(Level.INFO, "Summon Item Loaded: " + itemId + " -> " + mobId);
-
+        logger.info("Summon Item Loaded: {} -> {}", itemId, mobId);
         return Optional.of(summonItem);
     }
 }

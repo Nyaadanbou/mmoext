@@ -1,20 +1,20 @@
 package co.mcsky.mmoext.object;
 
-import co.mcsky.mmoext.config.bean.ExplosionEffectConfig;
-import co.mcsky.mmoext.config.bean.PotionEffectConfig;
-import co.mcsky.mmoext.config.bean.SoundEffectConfig;
+import co.mcsky.mmoext.config.ExplosionEffectConfig;
+import co.mcsky.mmoext.config.PotionEffectConfig;
+import co.mcsky.mmoext.config.SoundEffectConfig;
 
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-public class SummonEffects {
+public class SummonEffect {
 
     private ExplosionEffectConfig explosion;
     private final Set<SoundEffectConfig> sounds;
     private final Set<PotionEffectConfig> potions;
 
-    public SummonEffects() {
+    public SummonEffect() {
         this.explosion = null;
         this.sounds = new HashSet<>();
         this.potions = new HashSet<>();

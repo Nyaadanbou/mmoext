@@ -1,21 +1,25 @@
 package co.mcsky.mmoext.object;
 
-import cc.mewcraft.mewcore.util.UtilTowny;
-import co.mcsky.mmoext.HookId;
-import co.mcsky.mmoext.RPGBridge;
-import co.mcsky.mmoext.SimpleHook;
+import co.mcsky.mmoext.RPGBridgePlugin;
+import co.mcsky.mmoext.hook.TownyUtils;
 import io.lumine.mythic.bukkit.MythicBukkit;
 import me.lucko.helper.cooldown.Cooldown;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.block.Biome;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.util.BoundingBox;
 
-import java.util.*;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-public class SummonConditions {
+public class SummonCondition {
 
     // World conditions
     private final Set<String> worlds;
@@ -41,7 +45,7 @@ public class SummonConditions {
     private int cooldown;
     private final Map<UUID, Cooldown> cooldownMap;
 
-    public SummonConditions() {
+    public SummonCondition() {
         this.worlds = new HashSet<>();
         this.biomes = EnumSet.noneOf(Biome.class);
         this.minHeight = -64;
@@ -127,31 +131,31 @@ public class SummonConditions {
     }
 
     public boolean testWilderness(Location location) {
-        return !SimpleHook.hasPlugin(HookId.TOWNY) || !wilderness || UtilTowny.isInWilderness(location);
+        return !Bukkit.getPluginManager().isPluginEnabled("Towny") || !wilderness || TownyUtils.isInWilderness(location);
     }
 
     public long cooldownRemaining(UUID uuid, String itemId) {
-        var summon = RPGBridge.config().getSummonItem(itemId);
+        var summon = RPGBridgePlugin.settings().getSummonItem(itemId);
         if (summon.isEmpty()) return 0L;
         return cooldownMap
-            .computeIfAbsent(uuid, id -> Cooldown.of(this.cooldown, TimeUnit.SECONDS))
-            .remainingTime(TimeUnit.SECONDS);
+                .computeIfAbsent(uuid, id -> Cooldown.of(this.cooldown, TimeUnit.SECONDS))
+                .remainingTime(TimeUnit.SECONDS);
     }
 
     public boolean testCooldown(UUID uuid, String itemId) {
-        var summon = RPGBridge.config().getSummonItem(itemId);
+        var summon = RPGBridgePlugin.settings().getSummonItem(itemId);
         if (summon.isEmpty()) return true;
         return cooldownMap
-            .computeIfAbsent(uuid, id -> Cooldown.of(this.cooldown, TimeUnit.SECONDS))
-            .test();
+                .computeIfAbsent(uuid, id -> Cooldown.of(this.cooldown, TimeUnit.SECONDS))
+                .test();
     }
 
     public boolean testCooldownSilently(UUID uuid, String itemId) {
-        var summon = RPGBridge.config().getSummonItem(itemId);
+        var summon = RPGBridgePlugin.settings().getSummonItem(itemId);
         if (summon.isEmpty()) return true;
         return cooldownMap
-            .computeIfAbsent(uuid, id -> Cooldown.of(this.cooldown, TimeUnit.SECONDS))
-            .testSilently();
+                .computeIfAbsent(uuid, id -> Cooldown.of(this.cooldown, TimeUnit.SECONDS))
+                .testSilently();
     }
 
     public boolean testNearbyActiveMobs(Location location, String mobId) {

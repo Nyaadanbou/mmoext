@@ -1,32 +1,42 @@
 package co.mcsky.mmoext;
 
-import co.mcsky.mmoext.config.loader.SummonItemLoader;
+import co.mcsky.mmoext.config.SummonItemLoader;
 import co.mcsky.mmoext.object.SummonItem;
+import org.bukkit.plugin.Plugin;
+import org.slf4j.Logger;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
-public class MMOConfig {
+public class PluginSettings {
 
-    private final RPGBridge p;
+    private final Plugin plugin;
+    private final Logger logger;
 
     private final Map<String, SummonItem> summonItemMap;
     private final Set<String> summonMobIds;
 
-    public MMOConfig(RPGBridge p) {
-        this.p = p;
+    public PluginSettings(final Plugin plugin, final Logger logger) {
+        this.plugin = plugin;
+        this.logger = logger;
         this.summonItemMap = new HashMap<>();
         this.summonMobIds = new HashSet<>();
+        this.loadDefaultConfig();
     }
 
     public void loadDefaultConfig() {
-        p.saveDefaultConfig();
-        p.reloadConfig();
+        plugin.saveDefaultConfig();
+        plugin.reloadConfig();
     }
 
     public void loadSummonItems() {
         // Put map
         summonItemMap.clear();
-        Set<SummonItem> itemSet = new SummonItemLoader().readAll();
+        Set<SummonItem> itemSet = new SummonItemLoader(plugin, logger).readAll();
         itemSet.forEach(i -> summonItemMap.put(i.getItemId(), i));
 
         // Put set
@@ -35,7 +45,7 @@ public class MMOConfig {
     }
 
     public boolean getDebug() {
-        return p.getConfig().getBoolean("debug");
+        return plugin.getConfig().getBoolean("debug");
     }
 
     public Set<String> getSummonMobIds() {
@@ -51,7 +61,7 @@ public class MMOConfig {
     }
 
     public String getDamageFormat() {
-        return p.getConfig().getString("damage.format");
+        return plugin.getConfig().getString("damage.format");
     }
 
 }

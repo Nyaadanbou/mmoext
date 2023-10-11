@@ -1,6 +1,7 @@
 package co.mcsky.mmoext.listener;
 
-import co.mcsky.mmoext.RPGBridge;
+import cc.mewcraft.spatula.message.Translations;
+import co.mcsky.mmoext.PluginSettings;
 import dev.lone.itemsadder.api.CustomStack;
 import io.lumine.mythic.api.MythicProvider;
 import io.lumine.mythic.api.mobs.entities.SpawnReason;
@@ -9,11 +10,10 @@ import me.lucko.helper.Schedulers;
 import me.lucko.helper.cooldown.Cooldown;
 import me.lucko.helper.metadata.Metadata;
 import me.lucko.helper.metadata.MetadataKey;
-import me.lucko.helper.terminable.Terminable;
+import me.lucko.helper.plugin.HelperPlugin;
 import me.lucko.helper.utils.Log;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -23,13 +23,23 @@ import org.bukkit.util.Vector;
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
-public class SummonListener implements Listener, Terminable {
+public class SummonListener implements Listener {
 
     private static final MetadataKey<Cooldown> KEY_ANTI_CLICK_SPAM = MetadataKey.createCooldownKey("anti-click-spam");
     private static final MetadataKey<Cooldown> KEY_ANTI_CHAT_SPAM = MetadataKey.createCooldownKey("anti-chat-spam");
 
-    public SummonListener() {
-        RPGBridge.inst().registerListener(this);
+    private final HelperPlugin plugin;
+    private final PluginSettings settings;
+    private final Translations translations;
+
+    public SummonListener(
+            final HelperPlugin plugin,
+            final PluginSettings settings,
+            final Translations translations) {
+        this.plugin = plugin;
+        this.settings = settings;
+        this.translations = translations;
+        this.plugin.registerListener(this);
     }
 
     @EventHandler
@@ -43,7 +53,7 @@ public class SummonListener implements Listener, Terminable {
         if (cs == null) {
             return; // Not an ItemsAdder item
         }
-        var summonItem = RPGBridge.config().getSummonItem(cs.getNamespacedID());
+        var summonItem = settings.getSummonItem(cs.getNamespacedID());
         if (summonItem.isEmpty()) {
             return; // Is an ItemsAdder item but not matching config
         }
@@ -54,7 +64,7 @@ public class SummonListener implements Listener, Terminable {
             cooldown.reset();
             event.setCancelled(true);
             if (Metadata.provideForPlayer(player).getOrPut(KEY_ANTI_CHAT_SPAM, () -> Cooldown.of(2, TimeUnit.SECONDS)).test()) {
-                RPGBridge.lang().of("summon.click_spam").send(player);
+                translations.of("summon.click_spam").send(player);
             }
             return;
         }
@@ -63,39 +73,39 @@ public class SummonListener implements Listener, Terminable {
         var loc = event.getPlayer().getLocation();
         var conditions = summonItem.get().getCondition();
         if (!conditions.testCooldownSilently(player.getUniqueId(), summonItem.get().getItemId())) {
-            RPGBridge.lang().of("summon.cooldown_remaining")
-                .replace("sec", conditions.cooldownRemaining(player.getUniqueId(), summonItem.get().getItemId()))
-                .send(player);
+            translations.of("summon.cooldown_remaining")
+                    .replace("sec", conditions.cooldownRemaining(player.getUniqueId(), summonItem.get().getItemId()))
+                    .send(player);
             event.setCancelled(true);
             return;
         }
         if (!conditions.testWorld(player.getWorld().getName())) {
-            RPGBridge.lang().of("summon.world_not_allowed").send(player);
+            translations.of("summon.world_not_allowed").send(player);
             event.setCancelled(true);
             return;
         }
         if (!conditions.testBiome(loc.getBlock().getBiome())) {
-            RPGBridge.lang().of("summon.biome_not_allowed").send(player);
+            translations.of("summon.biome_not_allowed").send(player);
             event.setCancelled(true);
             return;
         }
         if (!conditions.testHeight(loc.getY())) {
-            RPGBridge.lang().of("summon.height_not_allowed").send(player);
+            translations.of("summon.height_not_allowed").send(player);
             event.setCancelled(true);
             return;
         }
         if (!conditions.testWilderness(loc)) {
-            RPGBridge.lang().of("summon.not_in_wilderness").send(player);
+            translations.of("summon.not_in_wilderness").send(player);
             event.setCancelled(true);
             return;
         }
         if (!conditions.testNearbyActiveMobs(loc, summonItem.get().getMobId())) {
-            RPGBridge.lang().of("summon.nearby_same_mob").send(player);
+            translations.of("summon.nearby_same_mob").send(player);
             event.setCancelled(true);
             return;
         }
         if (!conditions.testOpenSpace(loc)) {
-            RPGBridge.lang().of("summon.space_not_enough").send(player);
+            translations.of("summon.space_not_enough").send(player);
             event.setCancelled(true);
             return;
         }
@@ -105,7 +115,7 @@ public class SummonListener implements Listener, Terminable {
         if (boss.isEmpty()) {
             // This should never happen, but in case...
             Log.severe("Cannot find mob with ID: " + summonItem.get().getMobId());
-            RPGBridge.lang().of("summon.fatal_error").send(player);
+            translations.of("summon.fatal_error").send(player);
             event.setCancelled(true);
             return;
         }
@@ -146,17 +156,11 @@ public class SummonListener implements Listener, Terminable {
         // Delay mob spawning
         Schedulers.sync().runLater(() -> {
             boss.get().spawn(
-                BukkitAdapter.adapt(loc),
-                summonItem.get().getMobLevel(),
-                SpawnReason.SUMMON
+                    BukkitAdapter.adapt(loc),
+                    summonItem.get().getMobLevel(),
+                    SpawnReason.SUMMON
             );
         }, summonItem.get().getDelaySpawn());
-
-    }
-
-    @Override
-    public void close() {
-        HandlerList.unregisterAll(this);
     }
 
 }
