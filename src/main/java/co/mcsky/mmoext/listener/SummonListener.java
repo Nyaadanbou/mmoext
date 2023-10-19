@@ -39,7 +39,6 @@ public class SummonListener implements Listener {
         this.plugin = plugin;
         this.settings = settings;
         this.translations = translations;
-        this.plugin.registerListener(this);
     }
 
     @EventHandler

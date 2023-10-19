@@ -26,7 +26,7 @@ public class RPGBridgePlugin extends ExtendedJavaPlugin {
         INSTANCE = this;
 
         if (isPluginPresent("MythicMobs") && isPluginPresent("ItemsAdder")) {
-            registerListener(new SummonListener(this, settings, translations));
+            registerTerminableListener(new SummonListener(this, settings, translations)).bindWith(this);
         } else {
             getSLF4JLogger().error("MythicMobs / ItemsAdder are not present in this server. This plugin will effectively not work!");
             return;
